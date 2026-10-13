@@ -18,11 +18,11 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts
+      - run: npm run build:cloud
       - run: npm test
       - name: Stage public assets only
         run: |
-          mkdir public
-          cp index.html style.css app.mjs core.mjs references.mjs icon.svg .nojekyll public/
+          npm run stage:pages
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
