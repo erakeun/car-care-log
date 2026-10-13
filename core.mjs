@@ -28,17 +28,19 @@ const defaults = [
  ['엔진오일량','점검','일반 점검 참고 · 월 1회. 평지에서 설명서의 측정 방법을 따르세요. 오일량 확인은 오일 교체가 아닙니다.'],
  ['냉각수량','점검','일반 점검 참고 · 월 1회. 엔진이 완전히 식었을 때 보조탱크 눈금을 확인하세요. 뜨거울 때 캡을 열지 마세요.']
 ];
-export function freshState() { return {schemaVersion:1,vehicle:{name:'',odometer:null,fuel:'',type:''},items:defaults.map(([name,kind,note])=>({id:uid(),name,kind,note,intervalKm:name==='엔진오일 · 오일필터'?8000:null,intervalMonths:['타이어 상태 · 공기압','엔진오일량','냉각수량'].includes(name)?1:['브레이크 패드 · 디스크','엔진 에어필터','실내 에어컨필터'].includes(name)?12:name==='엔진오일 · 오일필터'?6:null,confirmed:false,baselineId:null})),records:[]}; }
+export function freshState() { return {schemaVersion:2,vehicle:{name:'',odometer:null,fuel:'',type:'',year:'',engine:'',transmission:'',usage:''},items:defaults.map(([name,kind,note])=>({id:uid(),name,kind,note,intervalKm:name==='엔진오일 · 오일필터'?8000:null,intervalMonths:['타이어 상태 · 공기압','엔진오일량','냉각수량'].includes(name)?1:['브레이크 패드 · 디스크','엔진 에어필터','실내 에어컨필터'].includes(name)?12:name==='엔진오일 · 오일필터'?6:null,confirmed:false,baselineId:null})),records:[]}; }
 function fail(s) { throw Error(s); }
 function object(v, keys) { if (!v || typeof v!=='object' || Array.isArray(v) || Object.keys(v).some(k=>!keys.includes(k)) || keys.some(k=>!Object.hasOwn(v,k))) fail('백업 형식 또는 필드가 올바르지 않습니다.'); }
 function str(s,n) { return typeof s==='string' && s.length<=n; }
 function integer(n,max,min=0) { return Number.isSafeInteger(n) && n>=min && n<=max; }
 export function validate(s,today=todayKST()) {
  object(s,['schemaVersion','vehicle','items','records']);
- if(s.schemaVersion!==1) fail('지원하지 않는 백업 버전입니다.');
- object(s.vehicle,['name','odometer','fuel','type']);
+ if(s.schemaVersion===1){object(s.vehicle,['name','odometer','fuel','type']);s=structuredClone(s);s.schemaVersion=2;s.vehicle={...s.vehicle,year:'',engine:'',transmission:'',usage:''};}
+ if(s.schemaVersion!==2) fail('지원하지 않는 백업 버전입니다.');
+ object(s.vehicle,['name','odometer','fuel','type','year','engine','transmission','usage']);
  const v=s.vehicle;
  if(!str(v.name,60)||!str(v.fuel,30)||!str(v.type,60)||(v.odometer!==null&&!integer(v.odometer,MAX_KM))) fail('차량 정보가 올바르지 않습니다.');
+ if(!str(v.year,4)||(v.year!==''&&(!/^\d{4}$/.test(v.year)||Number(v.year)<1900||Number(v.year)>Number(today.slice(0,4))+1))||!str(v.engine,100)||!['','자동','수동','CVT','DCT','기타'].includes(v.transmission)||!['','일반','가혹조건 가능','미확인'].includes(v.usage))fail('연식·엔진·변속기·주행 환경을 확인하세요.');
  if(!Array.isArray(s.items)||s.items.length>100||!Array.isArray(s.records)||s.records.length>10000) fail('항목 또는 이력 수가 허용 범위를 벗어납니다.');
  const ids=new Set(), rids=new Set();
  for(const i of s.items){ object(i,['id','name','kind','note','intervalKm','intervalMonths','confirmed','baselineId']);
