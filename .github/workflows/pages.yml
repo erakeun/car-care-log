@@ -22,7 +22,7 @@ jobs:
       - name: Stage public assets only
         run: |
           mkdir public
-          cp index.html style.css app.mjs core.mjs references.mjs icon.svg .nojekyll public/
+          cp index.html style.css app.mjs core.mjs references.mjs next-care.mjs shared.mjs shared-config.mjs icon.svg .nojekyll public/
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
