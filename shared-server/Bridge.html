@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><p>공유 장부 연결 중</p>
+<script>
+const config=<?!= config ?>;
+window.addEventListener('message',event=>{
+ if(event.origin!==config.origin||event.source!==window.top||event.data?.channel!==config.channel)return;
+ const message=event.data;const request={...message.request,appId:config.appId};if(request.snapshot){request.snapshotJson=JSON.stringify(request.snapshot);delete request.snapshot;}
+ google.script.run.withSuccessHandler(result=>{if(typeof result.snapshotJson==='string'){result.snapshot=JSON.parse(result.snapshotJson);delete result.snapshotJson;}window.top.postMessage({channel:config.channel,id:message.id,result},config.origin);}).withFailureHandler(error=>window.top.postMessage({channel:config.channel,id:message.id,error:error.message},config.origin)).ledgerRpc(request);
+});
+window.top.postMessage({channel:config.channel,ready:true},config.origin);
+</script>
